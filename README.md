@@ -1,4 +1,4 @@
-# EcoLabeler
+# autolabel
 
 This action automatically applies labels to pull requests according to the Eco QA process
 
@@ -9,7 +9,7 @@ This action automatically applies labels to pull requests according to the Eco Q
 ## Example usage
 
 ```
-uses: bswaidner/EcoLabeler@v1
+uses: bswaidner/autolabel@v1
 with:
     repo-token: "${{ secrets.GITHUB_TOKEN }}"
 ```
