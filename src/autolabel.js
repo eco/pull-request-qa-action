@@ -5,7 +5,7 @@ import {ApprovalStatus} from "./model/ApprovalStatus";
 const core = require('@actions/core');
 const github = require('@actions/github');
 
-export async function run(name, value) {
+export async function run(name) {
     try {
         const token = core.getInput("repo-token", { required: true });
 
@@ -20,9 +20,9 @@ export async function run(name, value) {
         const approvalStatus = await getApprovalStatus(client, prNumber)
         const state = getLabelerState(pullRequestState, approvalStatus)
 
-        updateLabels(client, prNumber, state, pullRequestState.labels).then(r => {})
+        console.log(`Updating labels to state ${state.name}`)
 
-        core.setOutput(`Updating labels to state ${state.name}`, value)
+        updateLabels(client, prNumber, state, pullRequestState.labels).then(r => {})
     } catch (error) {
         core.setFailed(error.message);
     }
@@ -93,6 +93,7 @@ async function updateLabels(client, prNumber, state, currentLabels) {
 }
 
 async function addLabels(client, prNumber, labels) {
+    console.log(`Adding ${labels}`)
     await client.rest.issues.addLabels({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
@@ -102,6 +103,8 @@ async function addLabels(client, prNumber, labels) {
 }
 
 async function removeLabels(client, prNumber, labels) {
+    console.log(`Removing ${labels}`)
+
     labels.map((label) =>
         client.rest.issues.removeLabel({
             owner: github.context.repo.owner,
