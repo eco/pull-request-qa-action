@@ -8484,14 +8484,20 @@ var __webpack_exports__ = {};
 __nccwpck_require__.r(__webpack_exports__);
 
 ;// CONCATENATED MODULE: ./src/model/Label.js
+/*
+ * Copyright (c) 2022.
+ *
+ *
+ */
+
 class Label {
-    static READY_FOR_REVIEW = new Label("Ready for Review")
+    static READY_FOR_REVIEW = new Label("Ready for review")
     static REVIEW_PASSED = new Label("Review passed")
-    static CHANGES_REQUESTED = new Label("Changes Requested")
-    static WORK_IN_PROGRESS = new Label("Work in Progress")
+    static CHANGES_REQUESTED = new Label("Changes requested")
+    static WORK_IN_PROGRESS = new Label("Work in progress")
     static READY_FOR_QA = new Label("Ready for QA")
     static IN_QA = new Label("In QA")
-    static QA_PASSED = new Label("QA Passed")
+    static QA_PASSED = new Label("QA passed")
 
     constructor(name) {
         this.name = name
