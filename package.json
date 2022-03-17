@@ -16,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/bswaidner/ecoLabeler/issues"
   },
-  "homepage": "https://github.com/bswaidner/ecoLabeler#readme"
+  "homepage": "https://github.com/bswaidner/ecoLabeler#readme",
+  "dependencies": {
+    "@actions/core": "^1.6.0",
+    "@actions/github": "^5.0.0"
+  }
 }
