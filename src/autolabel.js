@@ -81,8 +81,7 @@ async function getLabelerState(client, prNumber) {
 
 async function updateLabels(client, prNumber, state) {
     let labelsToAdd = state.labels().map(label => label.name)
-    console.log(labelsToAdd)
-    let labelsToRemove = Label.allCases().filter(label => !(labelsToAdd.contains(label.name)))
+    let labelsToRemove = Label.allCases().filter(label => !(labelsToAdd.includes(label.name)))
 
     await Promise.all(
         [addLabels(client, prNumber, labelsToAdd), removeLabels(client, prNumber, labelsToRemove)]
