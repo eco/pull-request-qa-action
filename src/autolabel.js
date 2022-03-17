@@ -10,6 +10,8 @@ export async function run() {
         const token = core.getInput("repo-token", { required: true });
         const event = core.getInput("event", { required: true });
 
+        console.log(event)
+
         const prNumber = getPrNumber();
         if (!prNumber) {
             console.log("Could not get pull request number from context, exiting");
