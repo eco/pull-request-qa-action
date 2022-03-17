@@ -10,6 +10,6 @@ This action automatically applies labels to pull requests according to the Eco Q
 
 ## Example usage
 
-uses: bswaidner/EcoLabeler@v1.1
+uses: bswaidner/EcoLabeler@v1
 with:
 repo-token: "${{ secrets.GITHUB_TOKEN }}"
