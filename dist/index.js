@@ -8632,6 +8632,8 @@ function getLabelerState(pullRequestState, approvalStatus) {
 }
 
 async function updateLabels(client, prNumber, state, currentLabels) {
+    console.log(`Updating labels...`)
+    console.log(`Current labels: ${currentLabels}`)
     let labelsToAdd = state.labels().map(label => label.name)
     let labelsToRemove = Label.allCases().filter(label =>  {
         return currentLabels.includes(label.name) && !(labelsToAdd.includes(label.name))
@@ -8643,7 +8645,7 @@ async function updateLabels(client, prNumber, state, currentLabels) {
 }
 
 async function addLabels(client, prNumber, labels) {
-    console.log(`Adding ${labels}`)
+    console.log(`Adding labels:  ${labels}`)
     await client.rest.issues.addLabels({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
@@ -8653,7 +8655,7 @@ async function addLabels(client, prNumber, labels) {
 }
 
 async function removeLabels(client, prNumber, labels) {
-    console.log(`Removing ${labels}`)
+    console.log(`Removing labels: ${labels}`)
 
     labels.map((label) =>
         client.rest.issues.removeLabel({
