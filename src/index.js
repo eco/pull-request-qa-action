@@ -1,3 +1,3 @@
 import { run } from "./autolabel"
 
-run();
+run().then(r => {});
