@@ -16,9 +16,11 @@ export async function run(name, value) {
         }
 
         const client = github.getOctokit(token);
-        const state = await getLabelerState(client, prNumber)
+        const pullRequestState = await getPullRequestState(client, prNumber)
+        const approvalStatus = await getApprovalStatus(client, prNumber)
+        const state = getLabelerState(pullRequestState, approvalStatus)
 
-        updateLabels(client, prNumber, state).then(r => {})
+        updateLabels(client, prNumber, state, pullRequestState.labels).then(r => {})
 
         core.setOutput(`Updating labels to state ${state.name}`, value)
     } catch (error) {
@@ -62,14 +64,12 @@ async function getPullRequestState(client, prNumber) {
     return {
         open: pullRequest.state === "open",
         draft: pullRequest.draft,
-        merged: pullRequest.merged
+        merged: pullRequest.merged,
+        labels: pullRequest.labels
     }
 }
 
-async function getLabelerState(client, prNumber) {
-    let pullRequestState = await getPullRequestState(client, prNumber)
-    let approvalStatus = await getApprovalStatus(client, prNumber)
-
+function getLabelerState(pullRequestState, approvalStatus) {
     if (pullRequestState.draft) {
         return LabelerState.WORK_IN_PROGRESS
     } else if (approvalStatus === ApprovalStatus.NEEDS_REVIEW) {
@@ -81,9 +81,11 @@ async function getLabelerState(client, prNumber) {
     }
 }
 
-async function updateLabels(client, prNumber, state) {
+async function updateLabels(client, prNumber, state, currentLabels) {
     let labelsToAdd = state.labels().map(label => label.name)
-    let labelsToRemove = Label.allCases().filter(label => !(labelsToAdd.includes(label.name)))
+    let labelsToRemove = Label.allCases().filter(label =>  {
+        return currentLabels.includes(label.name) && !(labelsToAdd.includes(label.name))
+    })
 
     await Promise.all(
         [addLabels(client, prNumber, labelsToAdd), removeLabels(client, prNumber, labelsToRemove)]
