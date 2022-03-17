@@ -65,7 +65,7 @@ async function getPullRequestState(client, prNumber) {
         open: pullRequest.state === "open",
         draft: pullRequest.draft,
         merged: pullRequest.merged,
-        labels: pullRequest.labels
+        labels: pullRequest.labels.map(label => label.name)
     }
 }
 
@@ -82,7 +82,6 @@ function getLabelerState(pullRequestState, approvalStatus) {
 }
 
 async function updateLabels(client, prNumber, state, currentLabels) {
-    console.log(`Updating labels...`)
     console.log(`Current labels: ${currentLabels}`)
     let labelsToAdd = state.labels().map(label => label.name)
     let labelsToRemove = Label.allCases().filter(label =>  {
