@@ -8484,14 +8484,14 @@ var __webpack_exports__ = {};
 __nccwpck_require__.r(__webpack_exports__);
 
 ;// CONCATENATED MODULE: ./src/model/Label.js
-class Label_Label {
-    static READY_FOR_REVIEW = new Label_Label("Ready for Review")
-    static REVIEW_PASSED = new Label_Label("Review passed")
-    static CHANGES_REQUESTED = new Label_Label("Changes Requested")
-    static WORK_IN_PROGRESS = new Label_Label("Work in Progress")
-    static READY_FOR_QA = new Label_Label("Ready for QA")
-    static IN_QA = new Label_Label("In QA")
-    static QA_PASSED = new Label_Label("QA Passed")
+class Label {
+    static READY_FOR_REVIEW = new Label("Ready for Review")
+    static REVIEW_PASSED = new Label("Review passed")
+    static CHANGES_REQUESTED = new Label("Changes Requested")
+    static WORK_IN_PROGRESS = new Label("Work in Progress")
+    static READY_FOR_QA = new Label("Ready for QA")
+    static IN_QA = new Label("In QA")
+    static QA_PASSED = new Label("QA Passed")
 
     constructor(name) {
         this.name = name
@@ -8526,13 +8526,13 @@ class LabelerState {
     labels() {
         switch (this) {
             case LabelerState.READY_FOR_REVIEW:
-                return [Label_Label.READY_FOR_REVIEW]
+                return [Label.READY_FOR_REVIEW]
             case LabelerState.REVIEW_PASSED:
-                return [Label_Label.REVIEW_PASSED, Label_Label.READY_FOR_QA]
+                return [Label.REVIEW_PASSED, Label.READY_FOR_QA]
             case LabelerState.CHANGES_REQUESTED:
-                return [Label_Label.CHANGES_REQUESTED]
+                return [Label.CHANGES_REQUESTED]
             case LabelerState.WORK_IN_PROGRESS:
-                return [Label_Label.WORK_IN_PROGRESS]
+                return [Label.WORK_IN_PROGRESS]
         }
     }
 
@@ -8558,9 +8558,6 @@ const github = __nccwpck_require__(3134);
 async function run() {
     try {
         const token = core.getInput("repo-token", { required: true });
-        const event = core.getInput("event", { required: true });
-
-        console.log(event)
 
         const prNumber = getPrNumber();
         if (!prNumber) {
@@ -8571,9 +8568,7 @@ async function run() {
         const client = github.getOctokit(token);
         const state = await getLabelerState(client, prNumber)
 
-        // Get the JSON webhook payload for the event that triggered the workflow
-        const payload = JSON.stringify(github.context.payload, undefined, 2)
-        console.log(`The event payload: ${payload}`);
+        await updateLabels(client, prNumber, state)
     } catch (error) {
         core.setFailed(error.message);
     }
@@ -8586,14 +8581,12 @@ function getPrNumber() {
 }
 
 async function getApprovalStatus(client, prNumber) {
-    const reviews = await client.rest.pulls.listReviews({
+    const { data: reviews } = await client.rest.pulls.listReviews({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             pull_number: prNumber,
         }
     )
-
-    console.log(reviews)
 
     let approved = reviews.filter( review => review.state === ApprovalStatus.APPROVED.name ).length > 0
     let changesRequested = reviews.filter( review => review.state === ApprovalStatus.CHANGES_REQUESTED.name ).length > 0
@@ -8607,37 +8600,42 @@ async function getApprovalStatus(client, prNumber) {
     }
 }
 
-async function getMergeState(client, prNumber) {
+async function getPullRequestState(client, prNumber) {
     const { data: pullRequest } = await client.rest.pulls.get({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         pull_number: prNumber,
     });
 
-    console.log(pullRequest)
-
-    return pullRequest.state === "closed"
+    return {
+        open: pullRequest.state === "open",
+        draft: pullRequest.draft,
+        merged: pullRequest.merged
+    }
 }
 
 async function getLabelerState(client, prNumber) {
-    let isMerged = await getMergeState(client, prNumber)
+    let pullRequestState = await getPullRequestState(client, prNumber)
     let approvalStatus = await getApprovalStatus(client, prNumber)
 
-
-    const { data: pullRequest } = await client.rest.pulls.get({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        pull_number: prNumber,
-    });
-
-
+    if (pullRequestState.draft) {
+        return LabelerState.WORK_IN_PROGRESS
+    } else if (approvalStatus === ApprovalStatus.NEEDS_REVIEW) {
+        return LabelerState.READY_FOR_REVIEW
+    } else if (approvalStatus === ApprovalStatus.APPROVED) {
+        return LabelerState.REVIEW_PASSED
+    } else if (approvalStatus === ApprovalStatus.CHANGES_REQUESTED) {
+        return LabelerState.CHANGES_REQUESTED
+    }
 }
 
-function updateLabels(client, prNumber, state) {
+async function updateLabels(client, prNumber, state) {
     let labelsToAdd = state.labels
     let labelsToRemove = Label.allCases().filter(label => !labelsToAdd.contains(label))
-    addLabels(client, prNumber, labelsToAdd)
-    removeLabels(client, prNumber, labelsToRemove)
+
+    await Promise.all(
+        [addLabels(client, prNumber, labelsToAdd), removeLabels(client, prNumber, labelsToRemove)]
+    )
 }
 
 async function addLabels(client, prNumber, labels) {

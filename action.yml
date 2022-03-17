@@ -5,9 +5,6 @@ inputs:
   repo-token:
     required: true
     description: 'The GITHUB_TOKEN secret'
-  event:
-    required: true
-    description: 'The github event received'
 
 
 runs:
