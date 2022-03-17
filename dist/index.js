@@ -8593,6 +8593,8 @@ async function getApprovalStatus(client, prNumber) {
         }
     )
 
+    console.log(reviews)
+
     let approved = reviews.filter( review => review.state === ApprovalStatus.APPROVED.name ).length > 0
     let changesRequested = reviews.filter( review => review.state === ApprovalStatus.CHANGES_REQUESTED.name ).length > 0
 
@@ -8612,12 +8614,14 @@ async function getMergeState(client, prNumber) {
         pull_number: prNumber,
     });
 
+    console.log(pullRequest)
+
     return pullRequest.state === "closed"
 }
 
 async function getLabelerState(client, prNumber) {
-    let approvalStatus = await getApprovalStatus(client, prNumber)
     let isMerged = await getMergeState(client, prNumber)
+    let approvalStatus = await getApprovalStatus(client, prNumber)
 
 
     const { data: pullRequest } = await client.rest.pulls.get({
