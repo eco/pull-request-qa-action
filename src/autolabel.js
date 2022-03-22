@@ -70,7 +70,9 @@ async function getPullRequestState(client, prNumber) {
 }
 
 function getLabelerState(pullRequestState, approvalStatus) {
-    if (pullRequestState.draft) {
+    if (!pullRequestState.open && !pullRequestState.merged) {
+        return LabelerState.CLOSED_WITHOUT_MERGE
+    } else if (pullRequestState.draft) {
         return LabelerState.WORK_IN_PROGRESS
     } else if (approvalStatus === ApprovalStatus.NEEDS_REVIEW) {
         return LabelerState.READY_FOR_REVIEW
