@@ -17,8 +17,7 @@ export async function run(name) {
 
         const client = github.getOctokit(token);
         const pullRequestState = await getPullRequestState(client, prNumber)
-        const approvalStatus = await getApprovalStatus(client, prNumber)
-        const state = getLabelerState(pullRequestState, approvalStatus)
+        const state = getLabelerState(pullRequestState)
 
         console.log(`Updating labels to state ${state.name}`)
 
@@ -55,6 +54,7 @@ async function getApprovalStatus(client, prNumber) {
 }
 
 async function getPullRequestState(client, prNumber) {
+    const approvalStatus = await getApprovalStatus(client, prNumber)
     const { data: pullRequest } = await client.rest.pulls.get({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
@@ -62,6 +62,7 @@ async function getPullRequestState(client, prNumber) {
     });
 
     return {
+        status: approvalStatus,
         open: pullRequest.state === "open",
         draft: pullRequest.draft,
         merged: pullRequest.merged,
@@ -69,16 +70,17 @@ async function getPullRequestState(client, prNumber) {
     }
 }
 
-function getLabelerState(pullRequestState, approvalStatus) {
+function getLabelerState(pullRequestState) {
+    console.log(`pull request state: ${pullRequestState}`)
     if (!pullRequestState.open && !pullRequestState.merged) {
         return LabelerState.CLOSED_WITHOUT_MERGE
     } else if (pullRequestState.draft) {
         return LabelerState.WORK_IN_PROGRESS
-    } else if (approvalStatus === ApprovalStatus.NEEDS_REVIEW) {
+    } else if (pullRequestState.status === ApprovalStatus.NEEDS_REVIEW) {
         return LabelerState.READY_FOR_REVIEW
-    } else if (approvalStatus === ApprovalStatus.APPROVED) {
+    } else if (pullRequestState.status === ApprovalStatus.APPROVED) {
         return LabelerState.REVIEW_PASSED
-    } else if (approvalStatus === ApprovalStatus.CHANGES_REQUESTED) {
+    } else if (pullRequestState.status === ApprovalStatus.CHANGES_REQUESTED) {
         return LabelerState.CHANGES_REQUESTED
     }
 }
