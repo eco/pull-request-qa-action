@@ -12,11 +12,11 @@ export class QAStatus {
     label() {
         switch (this) {
             case QAStatus.NEEDS_QA:
-                return [Label.READY_FOR_QA]
+                return Label.READY_FOR_QA
             case QAStatus.IN_QA:
-                return [Label.IN_QA]
+                return Label.IN_QA
             case QAStatus.QA_PASSED:
-                return [Label.QA_PASSED]
+                return Label.QA_PASSED
         }
     }
 
