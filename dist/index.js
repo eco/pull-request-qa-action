@@ -8634,23 +8634,23 @@ async function getPullRequestState(client, prNumber) {
 }
 
 function getNewLabels(pullRequestState) {
-    const str = JSON.stringify(pullRequestState)
+    const str = JSON.stringify(pullRequestState, null, 2)
     console.log(`pull request state: ${str}`)
 
     switch (true) {
         case !pullRequestState.open && !pullRequestState.merged:
             return []
-        case pullRequestState.status === ApprovalStatus.CHANGES_REQUESTED:
-            return [Label.CHANGES_REQUESTED]
         case pullRequestState.draft:
             return [Label.WORK_IN_PROGRESS]
+        case pullRequestState.status === ApprovalStatus.CHANGES_REQUESTED:
+            return [Label.CHANGES_REQUESTED]
         case pullRequestState.status === ApprovalStatus.NEEDS_REVIEW:
             return [Label.READY_FOR_REVIEW]
         case pullRequestState.status === ApprovalStatus.APPROVED:
             return [Label.REVIEW_PASSED, pullRequestState.qaStatus.label()]
+        default:
+            return []
     }
-
-    return []
 }
 
 async function updateLabels(client, prNumber, newLabels, currentLabels) {
