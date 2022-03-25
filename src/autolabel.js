@@ -121,7 +121,7 @@ async function addLabels(client, prNumber, labels) {
 async function removeLabels(client, prNumber, labels) {
     if (labels.length <= 0) { return }
 
-    console.log(`Removing labels: ${labels}`)
+    console.log(`Removing labels: ${labels.map(label => label.name)}`)
 
     labels.map((label) =>
         client.rest.issues.removeLabel({
