@@ -5,7 +5,7 @@ import {QAStatus} from "./model/QAState";
 const core = require('@actions/core');
 const github = require('@actions/github');
 
-export async function run(name) {
+export async function run() {
     try {
         const token = core.getInput("repo-token", { required: true });
 
@@ -74,7 +74,9 @@ async function getPullRequestState(client, prNumber) {
 }
 
 function getNewLabels(pullRequestState) {
-    console.log(`pull request state: ${pullRequestState}`)
+    const str = JSON.stringify(pullRequestState)
+    console.log(`pull request state: ${str}`)
+
     switch (true) {
         case !pullRequestState.open && !pullRequestState.merged:
             return []
@@ -104,7 +106,10 @@ async function updateLabels(client, prNumber, newLabels, currentLabels) {
 }
 
 async function addLabels(client, prNumber, labels) {
+    if (labels.length <= 0) { return }
+
     console.log(`Adding labels:  ${labels}`)
+
     await client.rest.issues.addLabels({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
@@ -114,6 +119,8 @@ async function addLabels(client, prNumber, labels) {
 }
 
 async function removeLabels(client, prNumber, labels) {
+    if (labels.length <= 0) { return }
+
     console.log(`Removing labels: ${labels}`)
 
     labels.map((label) =>
