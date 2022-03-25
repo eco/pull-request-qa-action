@@ -17,9 +17,9 @@ export async function run(name) {
 
         const client = github.getOctokit(token);
         const pullRequestState = await getPullRequestState(client, prNumber)
-        const newLabels = getNewLabels(pullRequestState)
+        const newLabels = getNewLabels(pullRequestState).map(label => label.name)
 
-        console.log(`Updating labels to state ${newLabels.map(label => label.name)}`)
+        console.log(`Updating labels to state ${newLabels}`)
 
         updateLabels(client, prNumber, newLabels, pullRequestState.labels).then(r => {})
     } catch (error) {
@@ -87,13 +87,15 @@ function getNewLabels(pullRequestState) {
         case pullRequestState.status === ApprovalStatus.APPROVED:
             return [Label.REVIEW_PASSED, pullRequestState.qaStatus.label()]
     }
+
+    return []
 }
 
 async function updateLabels(client, prNumber, newLabels, currentLabels) {
     console.log(`Current labels: ${currentLabels}`)
-    let labelsToAdd = newLabels.map(label => label.name)
+    let labelsToAdd = newLabels
     let labelsToRemove = Label.allCases().filter(label =>  {
-        return currentLabels.includes(label.name) && !(labelsToAdd.includes(label.name))
+        return currentLabels.includes(label) && !(labelsToAdd.includes(label))
     })
 
     await Promise.all(
