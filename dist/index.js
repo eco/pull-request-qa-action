@@ -8521,11 +8521,11 @@ class ApprovalStatus {
         this.name = name
     }
 }
-;// CONCATENATED MODULE: ./src/model/QAState.js
+;// CONCATENATED MODULE: ./src/model/QAStatus.js
 
 
 class QAStatus {
-    static READY_FOR_QA = new QAStatus("READY_FOR_QA")
+    static NEEDS_QA = new QAStatus("NEEDS_QA")
     static IN_QA = new QAStatus("IN_QA")
     static QA_PASSED = new QAStatus("QA_PASSED")
 
@@ -8535,7 +8535,7 @@ class QAStatus {
 
     label() {
         switch (this) {
-            case QAStatus.READY_FOR_QA:
+            case QAStatus.NEEDS_QA:
                 return [Label.READY_FOR_QA]
             case QAStatus.IN_QA:
                 return [Label.IN_QA]
@@ -8551,7 +8551,7 @@ class QAStatus {
             case labels.includes(Label.QA_PASSED.name):
                 return QAStatus.QA_PASSED
             default:
-                return QAStatus.READY_FOR_QA
+                return QAStatus.NEEDS_QA
         }
     }
 
@@ -8624,12 +8624,12 @@ async function getPullRequestState(client, prNumber) {
     const currentLabels = pullRequest.labels.map(label => label.name)
 
     return {
-        reviewStatus: approvalStatus,
-        qaStatus: QAStatus.fromLabels(currentLabels),
         open: pullRequest.state === "open",
         draft: pullRequest.draft,
         merged: pullRequest.merged,
-        labels: currentLabels
+        labels: currentLabels,
+        reviewStatus: approvalStatus,
+        qaStatus: QAStatus.fromLabels(currentLabels)
     }
 }
 
@@ -8655,7 +8655,7 @@ function getNewLabels(pullRequestState) {
 
 async function updateLabels(client, prNumber, newLabels, currentLabels) {
     console.log(`Current labels: ${currentLabels}`)
-    let labelsToAdd = newLabels
+    let labelsToAdd = newLabels.filter(label => !currentLabels.includes(label.name))
     let labelsToRemove = Label.allCases().filter(label =>  {
         return currentLabels.includes(label.name) && !(labelsToAdd.includes(label.name))
     })

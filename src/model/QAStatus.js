@@ -1,7 +1,7 @@
 import {Label} from "./Label";
 
 export class QAStatus {
-    static READY_FOR_QA = new QAStatus("READY_FOR_QA")
+    static NEEDS_QA = new QAStatus("NEEDS_QA")
     static IN_QA = new QAStatus("IN_QA")
     static QA_PASSED = new QAStatus("QA_PASSED")
 
@@ -11,7 +11,7 @@ export class QAStatus {
 
     label() {
         switch (this) {
-            case QAStatus.READY_FOR_QA:
+            case QAStatus.NEEDS_QA:
                 return [Label.READY_FOR_QA]
             case QAStatus.IN_QA:
                 return [Label.IN_QA]
@@ -27,7 +27,7 @@ export class QAStatus {
             case labels.includes(Label.QA_PASSED.name):
                 return QAStatus.QA_PASSED
             default:
-                return QAStatus.READY_FOR_QA
+                return QAStatus.NEEDS_QA
         }
     }
 

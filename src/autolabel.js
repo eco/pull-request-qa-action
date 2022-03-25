@@ -1,6 +1,6 @@
 import {Label} from "./model/Label";
 import {ApprovalStatus} from "./model/ApprovalStatus";
-import {QAStatus} from "./model/QAState";
+import {QAStatus} from "./model/QAStatus.js";
 
 const core = require('@actions/core');
 const github = require('@actions/github');
@@ -64,12 +64,12 @@ async function getPullRequestState(client, prNumber) {
     const currentLabels = pullRequest.labels.map(label => label.name)
 
     return {
-        reviewStatus: approvalStatus,
-        qaStatus: QAStatus.fromLabels(currentLabels),
         open: pullRequest.state === "open",
         draft: pullRequest.draft,
         merged: pullRequest.merged,
-        labels: currentLabels
+        labels: currentLabels,
+        reviewStatus: approvalStatus,
+        qaStatus: QAStatus.fromLabels(currentLabels)
     }
 }
 
@@ -95,7 +95,7 @@ function getNewLabels(pullRequestState) {
 
 async function updateLabels(client, prNumber, newLabels, currentLabels) {
     console.log(`Current labels: ${currentLabels}`)
-    let labelsToAdd = newLabels
+    let labelsToAdd = newLabels.filter(label => !currentLabels.includes(label.name))
     let labelsToRemove = Label.allCases().filter(label =>  {
         return currentLabels.includes(label.name) && !(labelsToAdd.includes(label.name))
     })
