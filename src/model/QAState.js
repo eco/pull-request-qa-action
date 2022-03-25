@@ -22,13 +22,13 @@ export class QAStatus {
 
     static fromLabels(labels) {
         switch (true) {
-            case labels.includes(QAStatus.IN_QA.name):
+            case labels.includes(Label.IN_QA.name):
                 return QAStatus.IN_QA
-            case labels.includes(QAStatus.QA_PASSED.name):
+            case labels.includes(Label.QA_PASSED.name):
                 return QAStatus.QA_PASSED
+            default:
+                return QAStatus.READY_FOR_QA
         }
-
-        return QAStatus.READY_FOR_QA
     }
 
 
