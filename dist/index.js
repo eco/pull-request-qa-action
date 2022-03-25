@@ -8299,6 +8299,14 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 7917:
+/***/ ((module) => {
+
+module.exports = eval("require")("./model/LabelerState");
+
+
+/***/ }),
+
 /***/ 2431:
 /***/ ((module) => {
 
@@ -8483,6 +8491,8 @@ var __webpack_exports__ = {};
 // ESM COMPAT FLAG
 __nccwpck_require__.r(__webpack_exports__);
 
+// EXTERNAL MODULE: ../../../../usr/local/lib/node_modules/@vercel/ncc/dist/ncc/@@notfound.js?./model/LabelerState
+var LabelerState = __nccwpck_require__(7917);
 ;// CONCATENATED MODULE: ./src/model/Label.js
 /*
  * Copyright (c) 2022.
@@ -8514,35 +8524,9 @@ class Label {
             this.QA_PASSED
         ]
     }
-}
-
-;// CONCATENATED MODULE: ./src/model/LabelerState.js
-
-
-class LabelerState {
-    static READY_FOR_REVIEW = new LabelerState("READY_FOR_REVIEW")
-    static REVIEW_PASSED = new LabelerState("REVIEW_PASSED")
-    static CHANGES_REQUESTED = new LabelerState("CHANGES_REQUESTED")
-    static WORK_IN_PROGRESS = new LabelerState("WORK_IN_PROGRESS")
-
-    constructor(name) {
-        this.name = name
-    }
-
-    labels() {
-        switch (this) {
-            case LabelerState.READY_FOR_REVIEW:
-                return [Label.READY_FOR_REVIEW]
-            case LabelerState.REVIEW_PASSED:
-                return [Label.REVIEW_PASSED, Label.READY_FOR_QA]
-            case LabelerState.CHANGES_REQUESTED:
-                return [Label.CHANGES_REQUESTED]
-            case LabelerState.WORK_IN_PROGRESS:
-                return [Label.WORK_IN_PROGRESS]
-        }
-    }
 
 }
+
 ;// CONCATENATED MODULE: ./src/model/ApprovalStatus.js
 class ApprovalStatus {
     static APPROVED = new ApprovalStatus("APPROVED")
@@ -8553,7 +8537,44 @@ class ApprovalStatus {
         this.name = name
     }
 }
+;// CONCATENATED MODULE: ./src/model/QAState.js
+
+
+class QAStatus {
+    static READY_FOR_QA = new QAStatus("READY_FOR_QA")
+    static IN_QA = new QAStatus("IN_QA")
+    static QA_PASSED = new QAStatus("QA_PASSED")
+
+    constructor(name) {
+        this.name = name
+    }
+
+    label() {
+        switch (this) {
+            case QAStatus.READY_FOR_QA:
+                return [Label.READY_FOR_QA]
+            case QAStatus.IN_QA:
+                return [Label.IN_QA]
+            case QAStatus.QA_PASSED:
+                return [Label.QA_PASSED]
+        }
+    }
+
+    static fromLabels(labels) {
+        switch (true) {
+            case labels.includes(QAStatus.IN_QA.name):
+                return QAStatus.IN_QA
+            case labels.includes(QAStatus.QA_PASSED.name):
+                return QAStatus.QA_PASSED
+        }
+
+        return QAStatus.READY_FOR_QA
+    }
+
+
+}
 ;// CONCATENATED MODULE: ./src/autolabel.js
+
 
 
 
@@ -8573,12 +8594,11 @@ async function run(name) {
 
         const client = github.getOctokit(token);
         const pullRequestState = await getPullRequestState(client, prNumber)
-        const approvalStatus = await getApprovalStatus(client, prNumber)
-        const state = getLabelerState(pullRequestState, approvalStatus)
+        const newLabels = getNewLabels(pullRequestState)
 
-        console.log(`Updating labels to state ${state.name}`)
+        console.log(`Updating labels to state ${newLabels.map(label => label.name)}`)
 
-        updateLabels(client, prNumber, state, pullRequestState.labels).then(r => {})
+        updateLabels(client, prNumber, newLabels, pullRequestState.labels).then(r => {})
     } catch (error) {
         core.setFailed(error.message);
     }
@@ -8611,35 +8631,44 @@ async function getApprovalStatus(client, prNumber) {
 }
 
 async function getPullRequestState(client, prNumber) {
+    const approvalStatus = await getApprovalStatus(client, prNumber)
     const { data: pullRequest } = await client.rest.pulls.get({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         pull_number: prNumber,
     });
 
+    const currentLabels = pullRequest.labels.map(label => label.name)
+
     return {
+        reviewStatus: approvalStatus,
+        qaStatus: QAStatus.fromLabels(currentLabels),
         open: pullRequest.state === "open",
         draft: pullRequest.draft,
         merged: pullRequest.merged,
-        labels: pullRequest.labels.map(label => label.name)
+        labels: currentLabels
     }
 }
 
-function getLabelerState(pullRequestState, approvalStatus) {
-    if (pullRequestState.draft) {
-        return LabelerState.WORK_IN_PROGRESS
-    } else if (approvalStatus === ApprovalStatus.NEEDS_REVIEW) {
-        return LabelerState.READY_FOR_REVIEW
-    } else if (approvalStatus === ApprovalStatus.APPROVED) {
-        return LabelerState.REVIEW_PASSED
-    } else if (approvalStatus === ApprovalStatus.CHANGES_REQUESTED) {
-        return LabelerState.CHANGES_REQUESTED
+function getNewLabels(pullRequestState) {
+    console.log(`pull request state: ${pullRequestState}`)
+    switch (true) {
+        case !pullRequestState.open && !pullRequestState.merged:
+            return []
+        case pullRequestState.status === ApprovalStatus.CHANGES_REQUESTED:
+            return [Label.CHANGES_REQUESTED]
+        case pullRequestState.draft:
+            return [Label.WORK_IN_PROGRESS]
+        case pullRequestState.status === ApprovalStatus.NEEDS_REVIEW:
+            return [Label.READY_FOR_REVIEW]
+        case pullRequestState.status === ApprovalStatus.APPROVED:
+            return [Label.REVIEW_PASSED, pullRequestState.qaStatus.label()]
     }
 }
 
-async function updateLabels(client, prNumber, state, currentLabels) {
+async function updateLabels(client, prNumber, newLabels, currentLabels) {
     console.log(`Current labels: ${currentLabels}`)
-    let labelsToAdd = state.labels().map(label => label.name)
+    let labelsToAdd = newLabels.map(label => label.name)
     let labelsToRemove = Label.allCases().filter(label =>  {
         return currentLabels.includes(label.name) && !(labelsToAdd.includes(label.name))
     })
