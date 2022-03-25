@@ -19,7 +19,7 @@ export async function run() {
         const pullRequestState = await getPullRequestState(client, prNumber)
         const newLabels = getNewLabels(pullRequestState).map(label => label.name)
 
-        console.log(`Updating labels to state ${newLabels}`)
+        console.log(`Updating labels to [${newLabels}]`)
 
         updateLabels(client, prNumber, newLabels, pullRequestState.labels).then(r => {})
     } catch (error) {
