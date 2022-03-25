@@ -8657,7 +8657,7 @@ async function updateLabels(client, prNumber, newLabels, currentLabels) {
     console.log(`Current labels: ${currentLabels}`)
     let labelsToAdd = newLabels.filter(label => !currentLabels.includes(label))
     let labelsToRemove = Label.allCases().filter(label =>  {
-        return currentLabels.includes(label.name) && !(labelsToAdd.includes(label.name))
+        return currentLabels.includes(label.name) && !(newLabels.includes(label.name))
     })
 
     await Promise.all(
