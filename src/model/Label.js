@@ -28,4 +28,5 @@ export class Label {
             this.QA_PASSED
         ]
     }
+
 }

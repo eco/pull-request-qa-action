@@ -1,6 +1,7 @@
 import {LabelerState} from "./model/LabelerState";
 import {Label} from "./model/Label";
 import {ApprovalStatus} from "./model/ApprovalStatus";
+import {QAStatus} from "./model/QAState";
 
 const core = require('@actions/core');
 const github = require('@actions/github');
@@ -17,11 +18,11 @@ export async function run(name) {
 
         const client = github.getOctokit(token);
         const pullRequestState = await getPullRequestState(client, prNumber)
-        const state = getLabelerState(pullRequestState)
+        const newLabels = getNewLabels(pullRequestState)
 
-        console.log(`Updating labels to state ${state.name}`)
+        console.log(`Updating labels to state ${newLabels.map(label => label.name)}`)
 
-        updateLabels(client, prNumber, state, pullRequestState.labels).then(r => {})
+        updateLabels(client, prNumber, newLabels, pullRequestState.labels).then(r => {})
     } catch (error) {
         core.setFailed(error.message);
     }
@@ -61,33 +62,37 @@ async function getPullRequestState(client, prNumber) {
         pull_number: prNumber,
     });
 
+    const currentLabels = pullRequest.labels.map(label => label.name)
+
     return {
-        status: approvalStatus,
+        reviewStatus: approvalStatus,
+        qaStatus: QAStatus.fromLabels(currentLabels),
         open: pullRequest.state === "open",
         draft: pullRequest.draft,
         merged: pullRequest.merged,
-        labels: pullRequest.labels.map(label => label.name)
+        labels: currentLabels
     }
 }
 
-function getLabelerState(pullRequestState) {
+function getNewLabels(pullRequestState) {
     console.log(`pull request state: ${pullRequestState}`)
-    if (!pullRequestState.open && !pullRequestState.merged) {
-        return LabelerState.CLOSED_WITHOUT_MERGE
-    } else if (pullRequestState.draft) {
-        return LabelerState.WORK_IN_PROGRESS
-    } else if (pullRequestState.status === ApprovalStatus.NEEDS_REVIEW) {
-        return LabelerState.READY_FOR_REVIEW
-    } else if (pullRequestState.status === ApprovalStatus.APPROVED) {
-        return LabelerState.REVIEW_PASSED
-    } else if (pullRequestState.status === ApprovalStatus.CHANGES_REQUESTED) {
-        return LabelerState.CHANGES_REQUESTED
+    switch (true) {
+        case !pullRequestState.open && !pullRequestState.merged:
+            return []
+        case pullRequestState.status === ApprovalStatus.CHANGES_REQUESTED:
+            return [Label.CHANGES_REQUESTED]
+        case pullRequestState.draft:
+            return [Label.WORK_IN_PROGRESS]
+        case pullRequestState.status === ApprovalStatus.NEEDS_REVIEW:
+            return [Label.READY_FOR_REVIEW]
+        case pullRequestState.status === ApprovalStatus.APPROVED:
+            return [Label.REVIEW_PASSED, pullRequestState.qaStatus.label()]
     }
 }
 
-async function updateLabels(client, prNumber, state, currentLabels) {
+async function updateLabels(client, prNumber, newLabels, currentLabels) {
     console.log(`Current labels: ${currentLabels}`)
-    let labelsToAdd = state.labels().map(label => label.name)
+    let labelsToAdd = newLabels.map(label => label.name)
     let labelsToRemove = Label.allCases().filter(label =>  {
         return currentLabels.includes(label.name) && !(labelsToAdd.includes(label.name))
     })
