@@ -8642,11 +8642,11 @@ function getNewLabels(pullRequestState) {
             return []
         case pullRequestState.draft:
             return [Label.WORK_IN_PROGRESS]
-        case pullRequestState.status === ApprovalStatus.CHANGES_REQUESTED:
+        case pullRequestState.reviewStatus === ApprovalStatus.CHANGES_REQUESTED:
             return [Label.CHANGES_REQUESTED]
-        case pullRequestState.status === ApprovalStatus.NEEDS_REVIEW:
+        case pullRequestState.reviewStatus === ApprovalStatus.NEEDS_REVIEW:
             return [Label.READY_FOR_REVIEW]
-        case pullRequestState.status === ApprovalStatus.APPROVED:
+        case pullRequestState.reviewStatus === ApprovalStatus.APPROVED:
             return [Label.REVIEW_PASSED, pullRequestState.qaStatus.label()]
         default:
             return []
