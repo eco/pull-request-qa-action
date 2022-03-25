@@ -1,4 +1,3 @@
-import {LabelerState} from "./model/LabelerState";
 import {Label} from "./model/Label";
 import {ApprovalStatus} from "./model/ApprovalStatus";
 import {QAStatus} from "./model/QAState";

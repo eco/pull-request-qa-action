@@ -8299,14 +8299,6 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 7917:
-/***/ ((module) => {
-
-module.exports = eval("require")("./model/LabelerState");
-
-
-/***/ }),
-
 /***/ 2431:
 /***/ ((module) => {
 
@@ -8491,15 +8483,7 @@ var __webpack_exports__ = {};
 // ESM COMPAT FLAG
 __nccwpck_require__.r(__webpack_exports__);
 
-// EXTERNAL MODULE: ../../../../usr/local/lib/node_modules/@vercel/ncc/dist/ncc/@@notfound.js?./model/LabelerState
-var LabelerState = __nccwpck_require__(7917);
 ;// CONCATENATED MODULE: ./src/model/Label.js
-/*
- * Copyright (c) 2022.
- *
- *
- */
-
 class Label {
     static READY_FOR_REVIEW = new Label("Ready for review")
     static REVIEW_PASSED = new Label("Review passed")
@@ -8574,7 +8558,6 @@ class QAStatus {
 
 }
 ;// CONCATENATED MODULE: ./src/autolabel.js
-
 
 
 

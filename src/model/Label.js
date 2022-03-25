@@ -1,9 +1,3 @@
-/*
- * Copyright (c) 2022.
- *
- *
- */
-
 export class Label {
     static READY_FOR_REVIEW = new Label("Ready for review")
     static REVIEW_PASSED = new Label("Review passed")
