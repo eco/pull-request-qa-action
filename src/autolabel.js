@@ -41,8 +41,21 @@ async function getApprovalStatus(client, prNumber) {
         }
     )
 
-    let approved = reviews.filter( review => review.state === ApprovalStatus.APPROVED.name ).length > 0
-    let changesRequested = reviews.filter( review => review.state === ApprovalStatus.CHANGES_REQUESTED.name ).length > 0
+    let approvals = reviews.filter( review => review.state === ApprovalStatus.APPROVED.name )
+    let changeRequests = reviews.filter( review => review.state === ApprovalStatus.CHANGES_REQUESTED.name )
+
+    let activeChangeRequests = changeRequests.filter(review => {
+        let author = review.user.id
+        let submittedAt = review.submitted_at
+
+        return approvals
+            .filter(review => { return review.user.id === author })
+            .filter(review => { return review.submitted_at > submittedAt })
+            .length === 0
+    })
+
+    let approved = approvals.length > 0
+    let changesRequested = activeChangeRequests.length > 0
 
     if (approved && !changesRequested) {
         return ApprovalStatus.APPROVED
