@@ -5,6 +5,8 @@ import {QAStatus} from "./model/QAStatus.js";
 const core = require('@actions/core');
 const github = require('@actions/github');
 
+let JIRA_PR_APPROVED_WEBHOOK = "https://automation.atlassian.com/pro/hooks/99c04c3891fa359e13d70428baf503c520256ab9"
+
 export async function run() {
     try {
         const token = core.getInput("repo-token", { required: true });
@@ -58,6 +60,7 @@ async function getApprovalStatus(client, prNumber) {
     let changesRequested = activeChangeRequests.length > 0
 
     if (approved && !changesRequested) {
+        sendMessage(JIRA_PR_APPROVED_WEBHOOK)
         return ApprovalStatus.APPROVED
     } else if (changesRequested) {
         return ApprovalStatus.CHANGES_REQUESTED
@@ -145,3 +148,19 @@ async function removeLabels(client, prNumber, labels) {
         })
     )
 }
+
+function sendMessage(webhook, requestType = "POST") {
+    const pullRequest = github.context.payload.pull_request
+    if (!pullRequest) { return undefined; }
+
+    var request = new XMLHttpRequest();
+    request.open(requestType, webhook);
+
+    request.setRequestHeader('Content-type', 'application/json');
+
+    var body = {
+        "pr_content": pullRequest.body,
+        "pr_title": pullRequest.title,
+        "branch_name": pullRequest.head.ref
+        }
+    }
