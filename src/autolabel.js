@@ -60,7 +60,6 @@ async function getApprovalStatus(client, prNumber) {
     let changesRequested = activeChangeRequests.length > 0
 
     if (approved && !changesRequested) {
-        sendMessage(JIRA_PR_APPROVED_WEBHOOK)
         return ApprovalStatus.APPROVED
     } else if (changesRequested) {
         return ApprovalStatus.CHANGES_REQUESTED
@@ -116,6 +115,10 @@ async function updateLabels(client, prNumber, newLabels, currentLabels) {
         return currentLabels.includes(label.name) && !(newLabels.includes(label.name))
     })
 
+    if (labelsToAdd == labelsToAdd.filter(label => label == "Ready for QA")) {
+        sendMessage(JIRA_PR_APPROVED_WEBHOOK)
+    }
+
     await Promise.all(
         [addLabels(client, prNumber, labelsToAdd), removeLabels(client, prNumber, labelsToRemove)]
     )
@@ -150,17 +153,20 @@ async function removeLabels(client, prNumber, labels) {
 }
 
 function sendMessage(webhook, requestType = "POST") {
-    const pullRequest = github.context.payload.pull_request
-    if (!pullRequest) { return undefined; }
+      const pullRequest = github.context.payload.pull_request
+      if (!pullRequest) { return undefined; }
 
-    var request = new XMLHttpRequest();
-    request.open(requestType, webhook);
+      var request = new XMLHttpRequest();
+      request.open(requestType, webhook);
 
-    request.setRequestHeader('Content-type', 'application/json');
+      request.setRequestHeader('Content-type', 'application/json');
 
-    var body = {
+      var body = {
         "pr_content": pullRequest.body,
         "pr_title": pullRequest.title,
         "branch_name": pullRequest.head.ref
-        }
-    }
+      }
+
+      console.log(Sending message ${body})
+      return request.send(JSON.stringify(body));
+}
