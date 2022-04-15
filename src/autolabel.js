@@ -115,7 +115,7 @@ async function updateLabels(client, prNumber, newLabels, currentLabels) {
         return currentLabels.includes(label.name) && !(newLabels.includes(label.name))
     })
 
-    if (labelsToAdd == labelsToAdd.filter(label => label == "Ready for QA")) {
+    if (labelsToAdd == labelsToAdd.includes("Ready for QA")) {
         sendMessage(JIRA_PR_APPROVED_WEBHOOK)
     }
 
@@ -167,6 +167,6 @@ function sendMessage(webhook, requestType = "POST") {
         "branch_name": pullRequest.head.ref
       }
 
-      console.log(Sending message ${body})
+      console.log(`Sending message ${body}`)
       return request.send(JSON.stringify(body));
 }
