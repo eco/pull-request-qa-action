@@ -26,7 +26,7 @@ This repo uses [vercel](https://github.com/vercel/ncc) `ncc`  to compile build p
 
 2. Tag the latest build
 ```
-git tag v1.x.x`
+git tag v1.x.x
 git push --tags
 ```
 
