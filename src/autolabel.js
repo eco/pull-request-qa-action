@@ -5,6 +5,8 @@ import {QAStatus} from "./model/QAStatus.js";
 const core = require('@actions/core');
 const github = require('@actions/github');
 
+let JIRA_PR_APPROVED_WEBHOOK = "https://automation.atlassian.com/pro/hooks/99c04c3891fa359e13d70428baf503c520256ab9"
+
 export async function run() {
     try {
         const token = core.getInput("repo-token", { required: true });
@@ -113,6 +115,10 @@ async function updateLabels(client, prNumber, newLabels, currentLabels) {
         return currentLabels.includes(label.name) && !(newLabels.includes(label.name))
     })
 
+    if (labelsToAdd == labelsToAdd.includes("Ready for QA")) {
+        sendMessage(JIRA_PR_APPROVED_WEBHOOK)
+    }
+
     await Promise.all(
         [addLabels(client, prNumber, labelsToAdd), removeLabels(client, prNumber, labelsToRemove)]
     )
@@ -144,4 +150,23 @@ async function removeLabels(client, prNumber, labels) {
             name: label.name,
         })
     )
+}
+
+function sendMessage(webhook, requestType = "POST") {
+      const pullRequest = github.context.payload.pull_request
+      if (!pullRequest) { return undefined; }
+
+      var request = new XMLHttpRequest();
+      request.open(requestType, webhook);
+
+      request.setRequestHeader('Content-type', 'application/json');
+
+      var body = {
+        "pr_content": pullRequest.body,
+        "pr_title": pullRequest.title,
+        "branch_name": pullRequest.head.ref
+      }
+
+      console.log(`Sending message ${body}`)
+      return request.send(JSON.stringify(body));
 }
