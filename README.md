@@ -34,6 +34,7 @@ git push --tags
 
 4. Update the base release tag
 ```
+git tag -d v1
 git tag v1
-git push --tags
+git push -f --tags
 ```
