@@ -1,11 +1,9 @@
 name: 'Autolabel'
 description: 'Automatically label new pull requests for Eco QA process'
-author: 'GitHub'
 inputs:
   repo-token:
     required: true
     description: 'The GITHUB_TOKEN secret'
-
 
 runs:
   using: 'node16'
