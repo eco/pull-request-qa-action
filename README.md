@@ -27,7 +27,7 @@ with:
 
 ## Deploy & Release
 
-This repo uses [vercel](https://github.com/vercel/ncc) `ncc`  to compile build pre-compiled files for distribution.
+This repo uses [vercel](https://github.com/vercel/ncc) `ncc`  to build pre-compiled files for distribution.
 
 1. Run `sh build.sh` to generate a new build.
 
