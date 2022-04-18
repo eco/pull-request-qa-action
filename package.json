@@ -19,6 +19,7 @@
   "homepage": "https://github.com/bswaidner/ecoLabeler#readme",
   "dependencies": {
     "@actions/core": "^1.6.0",
-    "@actions/github": "^5.0.0"
+    "@actions/github": "^5.0.0",
+    "xmlhttprequest": "^1.8.0"
   }
 }
