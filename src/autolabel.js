@@ -4,6 +4,7 @@ import {QAStatus} from "./model/QAStatus.js";
 
 const core = require('@actions/core');
 const github = require('@actions/github');
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 let JIRA_PR_APPROVED_WEBHOOK = "https://automation.atlassian.com/pro/hooks/99c04c3891fa359e13d70428baf503c520256ab9"
 
