@@ -18,6 +18,13 @@ with:
     repo-token: "${{ secrets.GITHUB_TOKEN }}"
 ```
 
+## Contributing 
+
+1. Clone the repo: `git clone https://github.com/bswaidner/autolabel`
+
+2. Install dependencies:
+`npm i` or `npm install`
+
 ## Deploy & Release
 
 This repo uses [vercel](https://github.com/vercel/ncc) `ncc`  to compile build pre-compiled files for distribution.
