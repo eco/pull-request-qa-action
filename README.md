@@ -1,10 +1,11 @@
-# autolabel
-
+# Pull Request QA
 Github action for the ECO QA Process
 
-This action automates:
+This action currently automates:
 - Adding labels to pull requests
 - Sending messages to JIRA when PRs are ready for QA
+
+TODO: Update repo name
 
 ## Inputs
  
@@ -13,9 +14,21 @@ This action automates:
 ## Example usage
 
 ```
-uses: bswaidner/autolabel@v1
-with:
-    repo-token: "${{ secrets.GITHUB_TOKEN }}"
+name: "Pull Request Action"
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, converted_to_draft, closed, synchronize]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+jobs:
+  pr-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Pull Request QA"
+        uses: eco/autolabel@v1
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
 ```
 
 ## Contributing 
