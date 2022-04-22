@@ -5,8 +5,6 @@ This action currently automates:
 - Adding labels to pull requests
 - Sending messages to JIRA when PRs are ready for QA
 
-TODO: Update repo name
-
 ## Inputs
  
 `repo-token`: The repo token [**Required**]
@@ -26,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Pull Request QA"
-        uses: eco/autolabel@v1
+        uses: eco/pull-request-qa-action@v1
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
 ```
