@@ -1,4 +1,4 @@
-# Pull Request QA
+# Pull Request QA Action
 Github action for the ECO QA Process
 
 This action currently automates:
