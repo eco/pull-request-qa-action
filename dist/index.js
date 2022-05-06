@@ -9223,7 +9223,7 @@ async function run() {
 
         updateLabels(client, prNumber, newLabels, pullRequestState.labels).then(r => {})
 
-        if (pullRequestState.qaStatus === "QA_PASSED" ) {
+        if (pullRequestState.qaStatus === QAStatus.QA_PASSED) {
             sendMessage(JIRA_QA_PASSED_WEBHOOK)
         }
 
