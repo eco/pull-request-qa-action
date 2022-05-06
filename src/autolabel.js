@@ -7,6 +7,8 @@ const github = require('@actions/github');
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 let JIRA_PR_APPROVED_WEBHOOK = "https://automation.atlassian.com/pro/hooks/99c04c3891fa359e13d70428baf503c520256ab9"
+let JIRA_QA_PASSED_WEBHOOK = "https://automation.atlassian.com/pro/hooks/9f1d97ccfea93079cdea6f1c1bb262b768670b6b"
+let JIRA_PR_MERGED_WEBHOOK = "https://automation.atlassian.com/pro/hooks/0ffdc93dd4d0e340de0b17c9f6c6df50e3820013"
 
 export async function run() {
     try {
@@ -25,6 +27,15 @@ export async function run() {
         console.log(`Updating labels to [${newLabels}]`)
 
         updateLabels(client, prNumber, newLabels, pullRequestState.labels).then(r => {})
+
+        if (pullRequestState.qaStatus === QAStatus.QA_PASSED) {
+            sendMessage(JIRA_QA_PASSED_WEBHOOK)
+        }
+
+        if (pullRequestState.merged) {
+            sendMessage(JIRA_PR_MERGED_WEBHOOK)
+        }
+
     } catch (error) {
         core.setFailed(error.message);
     }
