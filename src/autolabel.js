@@ -7,6 +7,8 @@ const github = require('@actions/github');
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 let JIRA_PR_APPROVED_WEBHOOK = "https://automation.atlassian.com/pro/hooks/99c04c3891fa359e13d70428baf503c520256ab9"
+let JIRA_READY_FOR_REVIEW = "https://automation.atlassian.com/pro/hooks/555fd72f115ea01673e11f4049e4de8ac5739033"
+let JIRA_IN_QA_WEBHOOK = "https://automation.atlassian.com/pro/hooks/60f0d41091bad9582f78e278603bc32d38f6aa33"
 let JIRA_QA_PASSED_WEBHOOK = "https://automation.atlassian.com/pro/hooks/9f1d97ccfea93079cdea6f1c1bb262b768670b6b"
 let JIRA_PR_MERGED_WEBHOOK = "https://automation.atlassian.com/pro/hooks/0ffdc93dd4d0e340de0b17c9f6c6df50e3820013"
 
@@ -28,6 +30,14 @@ export async function run() {
 
         updateLabels(client, prNumber, newLabels, pullRequestState.labels).then(r => {})
 
+        if (pullRequestState.reviewStatus === ApprovalStatus.APPROVED) {
+            sendMessage(JIRA_IN_QA_WEBHOOK)
+        }
+        
+        if (pullRequestState.qaStatus === QAStatus.IN_QA) {
+            sendMessage(JIRA_IN_QA_WEBHOOK)
+        }
+        
         if (pullRequestState.qaStatus === QAStatus.QA_PASSED) {
             sendMessage(JIRA_QA_PASSED_WEBHOOK)
         }
@@ -126,6 +136,11 @@ async function updateLabels(client, prNumber, newLabels, currentLabels) {
     let labelsToRemove = Label.allCases().filter(label =>  {
         return currentLabels.includes(label.name) && !(newLabels.includes(label.name))
     })
+
+
+    if (labelsToAdd.includes(Label.READY_FOR_REVIEW.name)) {
+        sendMessage(JIRA_READY_FOR_REVIEW)
+    }
 
     if (labelsToAdd.includes(Label.READY_FOR_QA.name)) {
         sendMessage(JIRA_PR_APPROVED_WEBHOOK)
