@@ -9224,10 +9224,6 @@ async function run() {
         console.log(`Updating labels to [${newLabels}]`)
 
         updateLabels(client, prNumber, newLabels, pullRequestState.labels).then(r => {})
-
-        if (pullRequestState.reviewStatus === ApprovalStatus.APPROVED) {
-            sendMessage(JIRA_IN_QA_WEBHOOK)
-        }
         
         if (pullRequestState.qaStatus === QAStatus.IN_QA) {
             sendMessage(JIRA_IN_QA_WEBHOOK)
