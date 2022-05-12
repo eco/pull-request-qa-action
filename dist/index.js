@@ -9201,11 +9201,11 @@ const core = __nccwpck_require__(9417);
 const github = __nccwpck_require__(9407);
 var XMLHttpRequest = (__nccwpck_require__(3002)/* .XMLHttpRequest */ .h);
 
-let JIRA_PR_APPROVED_WEBHOOK = "https://automation.atlassian.com/pro/hooks/99c04c3891fa359e13d70428baf503c520256ab9"
-let JIRA_READY_FOR_REVIEW = "https://automation.atlassian.com/pro/hooks/555fd72f115ea01673e11f4049e4de8ac5739033"
-let JIRA_IN_QA_WEBHOOK = "https://automation.atlassian.com/pro/hooks/60f0d41091bad9582f78e278603bc32d38f6aa33"
-let JIRA_QA_PASSED_WEBHOOK = "https://automation.atlassian.com/pro/hooks/9f1d97ccfea93079cdea6f1c1bb262b768670b6b"
-let JIRA_PR_MERGED_WEBHOOK = "https://automation.atlassian.com/pro/hooks/0ffdc93dd4d0e340de0b17c9f6c6df50e3820013"
+let JIRA_PR_APPROVED_WEBHOOK = (core.getInput('WH_PR_APPROVED'))
+let JIRA_READY_FOR_REVIEW = (core.getInput('WH_READY_FOR_REVIEW'))
+let JIRA_IN_QA_WEBHOOK = (core.getInput('WH_IN_QA'))
+let JIRA_QA_PASSED_WEBHOOK = (core.getInput('WH_QA_PASSED'))
+let JIRA_PR_MERGED_WEBHOOK = (core.getInput('WH_PR_MERGED'))
 
 async function run() {
     try {
