@@ -4,6 +4,21 @@ inputs:
   repo-token:
     required: true
     description: 'The GITHUB_TOKEN secret'
+  WH_PR_APPROVED:
+    required: true
+    description: 'Webhook for PR Approved JIRA actions'
+  WH_READY_FOR_REVIEW:
+    required: true
+    description: 'Webhook for Ready for Review JIRA actions'
+  WH_IN_QA:
+    required: true
+    description: 'Webhook for In QA JIRA actions'
+  WH_QA_PASSED:
+    required: true
+    description: 'Webhook for QA Passed JIRA actions'
+  WH_PR_MERGED:
+    required: true
+    description: 'Webhook for PR merged JIRA actions' 
 
 runs:
   using: 'node16'
