@@ -6,11 +6,11 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
-let JIRA_PR_APPROVED_WEBHOOK = (core.getInput('WH_PR_APPROVED'))
-let JIRA_READY_FOR_REVIEW = (core.getInput('WH_READY_FOR_REVIEW'))
-let JIRA_IN_QA_WEBHOOK = (core.getInput('WH_IN_QA'))
-let JIRA_QA_PASSED_WEBHOOK = (core.getInput('WH_QA_PASSED'))
-let JIRA_PR_MERGED_WEBHOOK = (core.getInput('WH_PR_MERGED'))
+let JIRA_PR_APPROVED_WEBHOOK = core.getInput('WH_PR_APPROVED')
+let JIRA_READY_FOR_REVIEW = core.getInput('WH_READY_FOR_REVIEW')
+let JIRA_IN_QA_WEBHOOK = core.getInput('WH_IN_QA')
+let JIRA_QA_PASSED_WEBHOOK = core.getInput('WH_QA_PASSED')
+let JIRA_PR_MERGED_WEBHOOK = core.getInput('WH_PR_MERGED')
 
 export async function run() {
     try {
