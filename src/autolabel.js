@@ -31,14 +31,17 @@ export async function run() {
         updateLabels(client, prNumber, newLabels, pullRequestState.labels).then(r => {})
         
         if (pullRequestState.qaStatus === QAStatus.IN_QA) {
+            console.log("Transitioning ticket to In QA status");
             sendMessage(JIRA_IN_QA_WEBHOOK)
         }
         
-        if (pullRequestState.qaStatus === QAStatus.QA_PASSED) {
+        if (pullRequestState.qaStatus === QAStatus.QA_PASSED && !pullRequestState.merged) {
+            console.log("Transitioning ticket to QA Passed status");
             sendMessage(JIRA_QA_PASSED_WEBHOOK)
         }
 
         if (pullRequestState.merged) {
+            console.log("Transitioning ticket to Merged status");
             sendMessage(JIRA_PR_MERGED_WEBHOOK)
         }
 
@@ -135,10 +138,12 @@ async function updateLabels(client, prNumber, newLabels, currentLabels) {
 
 
     if (labelsToAdd.includes(Label.READY_FOR_REVIEW.name)) {
+        console.log("Transitioning ticket to Review status");
         sendMessage(JIRA_READY_FOR_REVIEW)
     }
 
     if (labelsToAdd.includes(Label.READY_FOR_QA.name)) {
+        console.log("Transitioning ticket to Ready for QA status");
         sendMessage(JIRA_PR_APPROVED_WEBHOOK)
     }
 
