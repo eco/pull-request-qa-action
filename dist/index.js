@@ -9222,23 +9222,11 @@ async function run() {
         const newLabels = getNewLabels(pullRequestState).map(label => label.name)
 
         console.log(`Updating labels to [${newLabels}]`)
-
-        updateLabels(client, prNumber, newLabels, pullRequestState.labels).then(r => {})
         
-        if (pullRequestState.qaStatus === QAStatus.IN_QA) {
-            console.log("Transitioning ticket to In QA status");
-            sendMessage(JIRA_IN_QA_WEBHOOK)
+        if (github.event.action != 'labeled') {
+            updateLabels(client, prNumber, newLabels, pullRequestState.labels).then(r => { })
         }
-        
-        if (pullRequestState.qaStatus === QAStatus.QA_PASSED && !pullRequestState.merged) {
-            console.log("Transitioning ticket to QA Passed status");
-            sendMessage(JIRA_QA_PASSED_WEBHOOK)
-        }
-
-        if (pullRequestState.merged) {
-            console.log("Transitioning ticket to Merged status");
-            sendMessage(JIRA_PR_MERGED_WEBHOOK)
-        }
+        updateJiraTicket(newLabels, pullRequestState)
 
     } catch (error) {
         core.setFailed(error.message);
@@ -9253,14 +9241,14 @@ function getPrNumber() {
 
 async function getApprovalStatus(client, prNumber) {
     const { data: reviews } = await client.rest.pulls.listReviews({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            pull_number: prNumber,
-        }
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        pull_number: prNumber,
+    }
     )
 
-    let approvals = reviews.filter( review => review.state === ApprovalStatus.APPROVED.name )
-    let changeRequests = reviews.filter( review => review.state === ApprovalStatus.CHANGES_REQUESTED.name )
+    let approvals = reviews.filter(review => review.state === ApprovalStatus.APPROVED.name)
+    let changeRequests = reviews.filter(review => review.state === ApprovalStatus.CHANGES_REQUESTED.name)
 
     let activeChangeRequests = changeRequests.filter(review => {
         let author = review.user.id
@@ -9327,20 +9315,9 @@ function getNewLabels(pullRequestState) {
 async function updateLabels(client, prNumber, newLabels, currentLabels) {
     console.log(`Current labels: ${currentLabels}`)
     let labelsToAdd = newLabels.filter(label => !currentLabels.includes(label))
-    let labelsToRemove = Label.allCases().filter(label =>  {
+    let labelsToRemove = Label.allCases().filter(label => {
         return currentLabels.includes(label.name) && !(newLabels.includes(label.name))
     })
-
-
-    if (labelsToAdd.includes(Label.READY_FOR_REVIEW.name)) {
-        console.log("Transitioning ticket to Review status");
-        sendMessage(JIRA_READY_FOR_REVIEW)
-    }
-
-    if (labelsToAdd.includes(Label.READY_FOR_QA.name)) {
-        console.log("Transitioning ticket to Ready for QA status");
-        sendMessage(JIRA_PR_APPROVED_WEBHOOK)
-    }
 
     await Promise.all(
         [addLabels(client, prNumber, labelsToAdd), removeLabels(client, prNumber, labelsToRemove)]
@@ -9375,23 +9352,51 @@ async function removeLabels(client, prNumber, labels) {
     )
 }
 
+function updateJiraTicket(newLabels, pullRequestState) {
+
+    switch (true) {
+        case pullRequestState.merged:
+            console.log("Transitioning ticket to Merged status");
+            sendMessage(JIRA_PR_MERGED_WEBHOOK)
+            return
+        case pullRequestState.qaStatus === QAStatus.QA_PASSED && !pullRequestState.merged:
+            console.log("Transitioning ticket to QA Passed status");
+            sendMessage(JIRA_QA_PASSED_WEBHOOK)
+            return
+        case pullRequestState.qaStatus === QAStatus.IN_QA:
+            console.log("Transitioning ticket to In QA status");
+            sendMessage(JIRA_IN_QA_WEBHOOK)
+            return
+        case newLabels.includes(Label.READY_FOR_QA.name):
+            console.log("Transitioning ticket to Ready for QA status");
+            sendMessage(JIRA_PR_APPROVED_WEBHOOK)
+            return
+        case newLabels.includes(Label.READY_FOR_REVIEW.name):
+            console.log("Transitioning ticket to Review status");
+            sendMessage(JIRA_READY_FOR_REVIEW)
+            return
+        default:
+            return
+    }
+}
+
 function sendMessage(webhook, requestType = "POST") {
-      const pullRequest = github.context.payload.pull_request
-      if (!pullRequest) { return undefined; }
+    const pullRequest = github.context.payload.pull_request
+    if (!pullRequest) { return undefined; }
 
-      let request = new XMLHttpRequest();
-      request.open(requestType, webhook);
+    let request = new XMLHttpRequest();
+    request.open(requestType, webhook);
 
-      request.setRequestHeader('Content-type', 'application/json');
+    request.setRequestHeader('Content-type', 'application/json');
 
-      let body = {
+    let body = {
         "pr_content": pullRequest.body,
         "pr_title": pullRequest.title,
         "branch_name": pullRequest.head.ref
-      }
+    }
 
-      console.log(`Sending message ${body}`)
-      return request.send(JSON.stringify(body));
+    console.log(`Sending message ${body}`)
+    return request.send(JSON.stringify(body));
 }
 
 ;// CONCATENATED MODULE: ./src/index.js
