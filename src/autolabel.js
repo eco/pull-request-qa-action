@@ -28,7 +28,7 @@ export async function run() {
 
         console.log(`Updating labels to [${newLabels}]`)
         
-        if (github.event.action != 'labeled') {
+        if (github.context.eventName != 'labeled') {
             updateLabels(client, prNumber, newLabels, pullRequestState.labels).then(r => { })
         }
         updateJiraTicket(newLabels, pullRequestState)
