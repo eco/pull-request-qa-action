@@ -9392,7 +9392,9 @@ function sendMessage(webhook, requestType = "POST") {
     let body = {
         "pr_content": pullRequest.body,
         "pr_title": pullRequest.title,
-        "branch_name": pullRequest.head.ref
+        "branch_name": pullRequest.head.ref,
+        "pr_url": pullRequest.html_url,
+        "pr_author": pullRequest.user.login
     }
 
     console.log(`Sending message ${body}`)
