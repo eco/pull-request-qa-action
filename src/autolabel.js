@@ -158,6 +158,7 @@ async function removeLabels(client, prNumber, labels) {
 }
 
 function updateJiraTicket(newLabels, pullRequestState) {
+    const netNewLabels = newLabels.filter(label => !pullRequestState.labels.includes(label))
 
     switch (true) {
         case pullRequestState.merged:
@@ -172,11 +173,11 @@ function updateJiraTicket(newLabels, pullRequestState) {
             console.log("Transitioning ticket to In QA status");
             sendMessage(JIRA_IN_QA_WEBHOOK)
             return
-        case newLabels.includes(Label.READY_FOR_QA.name):
+        case netNewLabels.includes(Label.READY_FOR_QA.name):
             console.log("Transitioning ticket to Ready for QA status");
             sendMessage(JIRA_PR_APPROVED_WEBHOOK)
             return
-        case newLabels.includes(Label.READY_FOR_REVIEW.name):
+        case netNewLabels.includes(Label.READY_FOR_REVIEW.name):
             console.log("Transitioning ticket to Review status");
             sendMessage(JIRA_READY_FOR_REVIEW)
             return
