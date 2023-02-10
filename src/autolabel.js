@@ -11,6 +11,7 @@ let JIRA_READY_FOR_REVIEW = core.getInput('WH_READY_FOR_REVIEW')
 let JIRA_IN_QA_WEBHOOK = core.getInput('WH_IN_QA')
 let JIRA_QA_PASSED_WEBHOOK = core.getInput('WH_QA_PASSED')
 let JIRA_PR_MERGED_WEBHOOK = core.getInput('WH_PR_MERGED')
+let JIRA_DESIGN_REVIEW_WEBHOOK = core.getInput('WH_DESIGN_REVIEW')
 
 export async function run() {
     try {
@@ -176,6 +177,10 @@ function updateJiraTicket(newLabels, pullRequestState) {
         case netNewLabels.includes(Label.READY_FOR_QA.name):
             console.log("Transitioning ticket to Ready for QA status");
             sendMessage(JIRA_PR_APPROVED_WEBHOOK)
+            return
+        case netNewLabels.includes(Label.NEED_DESIGN_REVIEW.name):
+            console.log("Transitioning ticket to Needs Design Review status");
+            sendMessage(JIRA_DESIGN_REVIEW_WEBHOOK)
             return
         case netNewLabels.includes(Label.READY_FOR_REVIEW.name):
             console.log("Transitioning ticket to Review status");
