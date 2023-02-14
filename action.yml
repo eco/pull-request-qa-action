@@ -19,6 +19,9 @@ inputs:
   WH_PR_MERGED:
     required: true
     description: 'Webhook for PR merged JIRA actions' 
+  WH_DESIGN_REVIEW:
+    required: true
+    description: 'Webhook for Needs Design Review JIRA actions' 
 
 runs:
   using: 'node16'

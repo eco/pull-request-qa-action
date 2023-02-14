@@ -6,7 +6,7 @@ export class Label {
     static READY_FOR_QA = new Label("Ready for QA")
     static IN_QA = new Label("In QA")
     static QA_PASSED = new Label("QA passed")
-    static NEED_DESIGN_REVIEW = new Label("Need Design Review")
+    static NEEDS_DESIGN_REVIEW = new Label("Needs Design Review")
 
     constructor(name) {
         this.name = name
@@ -21,7 +21,7 @@ export class Label {
             this.WORK_IN_PROGRESS,
             this.IN_QA,
             this.QA_PASSED,
-            this.NEED_DESIGN_REVIEW
+            this.NEEDS_DESIGN_REVIEW
         ]
     }
 
