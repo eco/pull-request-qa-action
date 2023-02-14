@@ -178,7 +178,7 @@ function updateJiraTicket(newLabels, pullRequestState) {
             console.log("Transitioning ticket to Ready for QA status");
             sendMessage(JIRA_PR_APPROVED_WEBHOOK)
             return
-        case netNewLabels.includes(Label.NEED_DESIGN_REVIEW.name):
+        case netNewLabels.includes(Label.NEEDS_DESIGN_REVIEW.name):
             console.log("Transitioning ticket to Needs Design Review status");
             sendMessage(JIRA_DESIGN_REVIEW_WEBHOOK)
             return
