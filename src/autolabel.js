@@ -13,6 +13,13 @@ let JIRA_QA_PASSED_WEBHOOK = core.getInput('WH_QA_PASSED')
 let JIRA_PR_MERGED_WEBHOOK = core.getInput('WH_PR_MERGED')
 let JIRA_DESIGN_REVIEW_WEBHOOK = core.getInput('WH_DESIGN_REVIEW')
 
+// Get required approvals input argument
+const requiredApprovals = parseInt(core.getInput('REQUIRED_APPROVALS')) || 1;
+
+// Get manual QA label input argument
+const manualQARequest = core.getInput('MANUAL_QA_REQUEST') === 'true';
+
+
 export async function run() {
     try {
         const token = core.getInput("repo-token", { required: true });
@@ -66,8 +73,8 @@ async function getApprovalStatus(client, prNumber) {
             .length === 0
     })
 
-    let approved = approvals.length > 0
-    let changesRequested = activeChangeRequests.length > 0
+    let approved = approvals.length >= requiredApprovals;
+    let changesRequested = activeChangeRequests.length > 0;
 
     if (approved && !changesRequested) {
         return ApprovalStatus.APPROVED
@@ -102,19 +109,28 @@ function getNewLabels(pullRequestState) {
     const str = JSON.stringify(pullRequestState, null, 2)
     console.log(`pull request state: ${str}`)
 
+    const hasChangesRequested = pullRequestState.labels.includes(Label.CHANGES_REQUESTED.name);
+    const hasNeedsDesignReview = pullRequestState.labels.includes(Label.NEEDS_DESIGN_REVIEW.name);
+
     switch (true) {
         case !pullRequestState.open && !pullRequestState.merged:
             return []
         case pullRequestState.draft:
             return [Label.WORK_IN_PROGRESS]
-        case pullRequestState.reviewStatus === ApprovalStatus.CHANGES_REQUESTED:
-            return [Label.CHANGES_REQUESTED]
-        case pullRequestState.reviewStatus === ApprovalStatus.NEEDS_REVIEW:
-            return [Label.READY_FOR_REVIEW]
+        case pullRequestState.reviewStatus === ApprovalStatus.CHANGES_REQUESTED && !hasChangesRequested:
+            return [Label.CHANGES_REQUESTED];
+        case pullRequestState.reviewStatus === ApprovalStatus.NEEDS_REVIEW && !hasChangesRequested:
+            return hasNeedsDesignReview ? [Label.READY_FOR_REVIEW, Label.NEEDS_DESIGN_REVIEW.name] : [Label.READY_FOR_REVIEW];
         case pullRequestState.reviewStatus === ApprovalStatus.APPROVED:
-            return [Label.REVIEW_PASSED, pullRequestState.qaStatus.label()]
+            if (manualQA) {
+                // If manual QA is enabled, keep the existing QA status label
+                return [Label.REVIEW_PASSED, pullRequestState.qaStatus.label()];
+            } else {
+                // If manual QA is disabled, automatically set the "Ready for QA" label
+                return [Label.REVIEW_PASSED, Label.READY_FOR_QA];
+            }
         default:
-            return []
+            return hasNeedsDesignReview ? [Label.NEEDS_DESIGN_REVIEW.name] : [];
     }
 }
 
@@ -148,13 +164,15 @@ async function removeLabels(client, prNumber, labels) {
 
     console.log(`Removing labels: ${labels.map(label => label.name)}`)
 
-    labels.map((label) =>
-        client.rest.issues.removeLabel({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            issue_number: prNumber,
-            name: label.name,
-        })
+    await Promise.all(
+        labels.map((label) =>
+            client.rest.issues.removeLabel({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                issue_number: prNumber,
+                name: label.name,
+            })
+        )
     )
 }
 
