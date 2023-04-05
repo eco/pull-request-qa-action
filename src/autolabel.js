@@ -53,43 +53,24 @@ function getPrNumber() {
 }
 
 async function getApprovalStatus(client, prNumber) {
-  const { data: reviews } = await client.rest.pulls.listReviews({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    pull_number: prNumber,
-  }
-  )
-
-  let approvals = reviews.filter((review) => review.state === ApprovalStatus.APPROVED.name)
-  let changeRequests = reviews.filter((review) => review.state === ApprovalStatus.CHANGES_REQUESTED.name)
-
-  let activeChangeRequests = changeRequests.filter((review) => {
-    let author = review.user.id
-    let submittedAt = review.submitted_at
-
-    // Check for re-requests from the same user
-    let reRequests = changeRequests.filter((req) => {
-      return req.user.id === author && req.submitted_at > submittedAt
+    const { data: reviews } = await client.rest.pulls.listReviews({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        pull_number: prNumber,
     })
 
-    // Ignore previous change requests from the user who requested changes
-    return (
-      approvals.filter((review) => review.user.id === author && review.submitted_at > submittedAt).length === 0 &&
-      reRequests.length === 0
-    )
-  })
+    let approvals = reviews.filter(review => review.state === ApprovalStatus.APPROVED.name)
 
-  let approved = approvals.length >= requiredApprovals
-  let changesRequested = activeChangeRequests.length > 0
+    let approved = approvals.length >= requiredApprovals
 
-  if (approved && !changesRequested) {
-    return ApprovalStatus.APPROVED
-  } else if (changesRequested) {
-    return ApprovalStatus.CHANGES_REQUESTED
-  } else {
-    return ApprovalStatus.NEEDS_REVIEW
-  }
+    if (approved) {
+        return ApprovalStatus.APPROVED
+    } else {
+        return ApprovalStatus.NEEDS_REVIEW
+    }
 }
+
+// w
 
 async function getPullRequestState(client, prNumber) {
     const approvalStatus = await getApprovalStatus(client, prNumber)
@@ -115,7 +96,6 @@ function getNewLabels(pullRequestState) {
     const str = JSON.stringify(pullRequestState, null, 2)
     console.log(`pull request state: ${str}`)
 
-    const hasChangesRequested = pullRequestState.labels.includes(Label.CHANGES_REQUESTED.name);
     const hasNeedsDesignReview = pullRequestState.labels.includes(Label.NEEDS_DESIGN_REVIEW.name);
 
     switch (true) {
@@ -123,14 +103,12 @@ function getNewLabels(pullRequestState) {
             return []
         case pullRequestState.draft:
             return [Label.WORK_IN_PROGRESS]
-        case pullRequestState.reviewStatus === ApprovalStatus.CHANGES_REQUESTED && !hasChangesRequested:
-            return [Label.CHANGES_REQUESTED];
-        case pullRequestState.reviewStatus === ApprovalStatus.NEEDS_REVIEW && !hasChangesRequested:
+        case pullRequestState.reviewStatus === ApprovalStatus.NEEDS_REVIEW:
             return hasNeedsDesignReview ? [Label.READY_FOR_REVIEW, Label.NEEDS_DESIGN_REVIEW.name] : [Label.READY_FOR_REVIEW];
         case pullRequestState.reviewStatus === ApprovalStatus.APPROVED:
-            if (manualQA) {
-                // If manual QA is enabled, keep the existing QA status label
-                return [Label.REVIEW_PASSED, pullRequestState.qaStatus.label()];
+            if (manualQARequest) {
+                // If manual QA is enabled, only apply the "Review Passed" label
+                return [Label.REVIEW_PASSED];
             } else {
                 // If manual QA is disabled, automatically set the "Ready for QA" label
                 return [Label.REVIEW_PASSED, Label.READY_FOR_QA];

@@ -16,7 +16,6 @@ export class Label {
         return [
             this.READY_FOR_REVIEW,
             this.REVIEW_PASSED,
-            this.CHANGES_REQUESTED,
             this.READY_FOR_QA,
             this.WORK_IN_PROGRESS,
             this.IN_QA,
