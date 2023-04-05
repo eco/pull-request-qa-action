@@ -9250,36 +9250,42 @@ function getPrNumber() {
 }
 
 async function getApprovalStatus(client, prNumber) {
-    const { data: reviews } = await client.rest.pulls.listReviews({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        pull_number: prNumber,
-    }
-    )
+  const { data: reviews } = await client.rest.pulls.listReviews({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    pull_number: prNumber,
+  }
+  )
 
-    let approvals = reviews.filter(review => review.state === ApprovalStatus.APPROVED.name)
-    let changeRequests = reviews.filter(review => review.state === ApprovalStatus.CHANGES_REQUESTED.name)
+  let approvals = reviews.filter((review) => review.state === ApprovalStatus.APPROVED.name)
+  let changeRequests = reviews.filter((review) => review.state === ApprovalStatus.CHANGES_REQUESTED.name)
 
-    let activeChangeRequests = changeRequests.filter(review => {
-        let author = review.user.id
-        let submittedAt = review.submitted_at
+  let activeChangeRequests = changeRequests.filter((review) => {
+    let author = review.user.id
+    let submittedAt = review.submitted_at
 
-        return approvals
-            .filter(review => { return review.user.id === author })
-            .filter(review => { return review.submitted_at > submittedAt })
-            .length === 0
+    // Check for re-requests from the same user
+    let reRequests = changeRequests.filter((req) => {
+      return req.user.id === author && req.submitted_at > submittedAt
     })
 
-    let approved = approvals.length >= requiredApprovals;
-    let changesRequested = activeChangeRequests.length > 0;
+    // Ignore previous change requests from the user who requested changes
+    return (
+      approvals.filter((review) => review.user.id === author && review.submitted_at > submittedAt).length === 0 &&
+      reRequests.length === 0
+    )
+  })
 
-    if (approved && !changesRequested) {
-        return ApprovalStatus.APPROVED
-    } else if (changesRequested) {
-        return ApprovalStatus.CHANGES_REQUESTED
-    } else {
-        return ApprovalStatus.NEEDS_REVIEW
-    }
+  let approved = approvals.length >= requiredApprovals
+  let changesRequested = activeChangeRequests.length > 0
+
+  if (approved && !changesRequested) {
+    return ApprovalStatus.APPROVED
+  } else if (changesRequested) {
+    return ApprovalStatus.CHANGES_REQUESTED
+  } else {
+    return ApprovalStatus.NEEDS_REVIEW
+  }
 }
 
 async function getPullRequestState(client, prNumber) {
