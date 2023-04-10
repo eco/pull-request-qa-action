@@ -56,3 +56,14 @@ git tag -d v1
 git tag v1
 git push -f --tags
 ```
+
+## Testing
+
+1. Update the `v1-debug` tag
+```
+git tag -d v1-debug
+git tag v1-debug
+git push -f --tags
+```
+
+2. Use the [playground repo](https://github.com/eco/pull-request-qa-action-test-repo) to test changes
