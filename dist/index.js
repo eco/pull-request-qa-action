@@ -9293,6 +9293,7 @@ function getNewLabels(pullRequestState) {
     console.log(`pull request state: ${str}`)
 
     const hasNeedsDesignReview = pullRequestState.labels.includes(Label.NEEDS_DESIGN_REVIEW.name);
+    const currentQAStatus = QAStatus.fromLabels(pullRequestState.labels);
 
     switch (true) {
         case !pullRequestState.open && !pullRequestState.merged:
@@ -9307,7 +9308,7 @@ function getNewLabels(pullRequestState) {
                 return [Label.REVIEW_PASSED];
             } else {
                 // If manual QA is disabled, automatically set the "Ready for QA" label
-                return [Label.REVIEW_PASSED, Label.READY_FOR_QA];
+                return [Label.REVIEW_PASSED, pullRequestState.qaStatus.label()];
             }
         default:
             return hasNeedsDesignReview ? [Label.NEEDS_DESIGN_REVIEW.name] : [];
@@ -9318,13 +9319,14 @@ async function updateLabels(client, prNumber, newLabels, currentLabels) {
     console.log(`Current labels: ${currentLabels}`)
     let labelsToAdd = newLabels.filter(label => !currentLabels.includes(label))
     let labelsToRemove = Label.allCases().filter(label => {
-        return currentLabels.includes(label.name) && !(newLabels.includes(label.name))
+        return currentLabels.includes(label.name) && !(newLabels.includes(label.name)) && label.name !== Label.IN_QA.name && label.name !== Label.QA_PASSED.name && label.name !== Label.QA_FAILED.name;
     })
 
     await Promise.all(
         [addLabels(client, prNumber, labelsToAdd), removeLabels(client, prNumber, labelsToRemove)]
     )
 }
+
 
 async function addLabels(client, prNumber, labels) {
     if (labels.length <= 0) { return }
