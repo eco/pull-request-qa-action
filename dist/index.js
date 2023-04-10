@@ -9301,13 +9301,13 @@ function getNewLabels(pullRequestState) {
             return [Label.WORK_IN_PROGRESS]
         case pullRequestState.reviewStatus === ApprovalStatus.NEEDS_REVIEW:
             return hasNeedsDesignReview ? [Label.READY_FOR_REVIEW, Label.NEEDS_DESIGN_REVIEW.name] : [Label.READY_FOR_REVIEW];
-        case pullRequestState.reviewStatus === ApprovalStatus.APPROVED:
+        case pullRequestState.reviewStatus === ApprovalStatus.APPROVED && currentQAStatus === QAStatus.NEEDS_QA:
             if (manualQARequest) {
                 // If manual QA is enabled, only apply the "Review Passed" label
                 return [Label.REVIEW_PASSED];
             } else {
                 // If manual QA is disabled, automatically set the "Ready for QA" label
-                return [Label.REVIEW_PASSED, Label.READY_FOR_QA];
+                return [Label.REVIEW_PASSED, pullRequestState.qaStatus.label()];
             }
         default:
             return hasNeedsDesignReview ? [Label.NEEDS_DESIGN_REVIEW.name] : [];
