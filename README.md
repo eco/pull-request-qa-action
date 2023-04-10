@@ -31,7 +31,7 @@ jobs:
 
 ## Contributing 
 
-1. Clone the repo: `git clone https://github.com/bswaidner/autolabel`
+1. Clone the repo: `git clone https://github.com/eco/pull-request-qa-action`
 
 2. Install dependencies:
 `npm i` or `npm install`
@@ -48,7 +48,7 @@ git tag v1.x.x
 git push --tags
 ```
 
-3. Add a new release in [Github Releases](https://github.com/bswaidner/autolabel/releases)
+3. Add a new release in [Github Releases](https://github.com/eco/pull-request-qa-action/releases)
 
 4. Update the base release tag
 ```
