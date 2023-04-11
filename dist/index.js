@@ -9127,6 +9127,7 @@ class Label {
     static READY_FOR_QA = new Label("Ready for QA")
     static IN_QA = new Label("In QA")
     static QA_PASSED = new Label("QA passed")
+    static QA_FAILED = new Label("QA failed")
     static NEEDS_DESIGN_REVIEW = new Label("Needs Design Review")
 
     constructor(name) {
@@ -9141,6 +9142,7 @@ class Label {
             this.WORK_IN_PROGRESS,
             this.IN_QA,
             this.QA_PASSED,
+            this.QA_FAILED,
             this.NEEDS_DESIGN_REVIEW
         ]
     }
@@ -9164,6 +9166,8 @@ class QAStatus {
     static NEEDS_QA = new QAStatus("NEEDS_QA")
     static IN_QA = new QAStatus("IN_QA")
     static QA_PASSED = new QAStatus("QA_PASSED")
+    static QA_FAILED = new QAStatus("QA_FAILED")
+
 
     constructor(name) {
         this.name = name
@@ -9177,6 +9181,8 @@ class QAStatus {
                 return Label.IN_QA
             case QAStatus.QA_PASSED:
                 return Label.QA_PASSED
+            case QAStatus.QA_FAILED:
+                return Label.QA_FAILED
         }
     }
 
@@ -9186,13 +9192,14 @@ class QAStatus {
                 return QAStatus.IN_QA
             case labels.includes(Label.QA_PASSED.name):
                 return QAStatus.QA_PASSED
+            case labels.includes(Label.QA_FAILED.name):
+                return QAStatus.QA_FAILED
             default:
                 return QAStatus.NEEDS_QA
         }
     }
-
-
 }
+
 ;// CONCATENATED MODULE: ./src/autolabel.js
 
 
@@ -9254,8 +9261,11 @@ async function getApprovalStatus(client, prNumber) {
         repo: github.context.repo.repo,
         pull_number: prNumber,
     })
+    console.log(reviews)
 
     let approvals = reviews.filter(review => review.state === ApprovalStatus.APPROVED.name)
+    console.log(`Approvals count: ${approvals.length}`)
+
 
     let approved = approvals.length >= requiredApprovals
 
@@ -9266,10 +9276,9 @@ async function getApprovalStatus(client, prNumber) {
     }
 }
 
-// w
-
 async function getPullRequestState(client, prNumber) {
     const approvalStatus = await getApprovalStatus(client, prNumber)
+
     const { data: pullRequest } = await client.rest.pulls.get({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
@@ -9291,6 +9300,7 @@ async function getPullRequestState(client, prNumber) {
 function getNewLabels(pullRequestState) {
     const str = JSON.stringify(pullRequestState, null, 2)
     console.log(`pull request state: ${str}`)
+    console.log(`manual QA required: ${manualQARequest}`)
 
     const hasNeedsDesignReview = pullRequestState.labels.includes(Label.NEEDS_DESIGN_REVIEW.name);
     const currentQAStatus = QAStatus.fromLabels(pullRequestState.labels);
@@ -9308,7 +9318,7 @@ function getNewLabels(pullRequestState) {
                 return [Label.REVIEW_PASSED];
             } else {
                 // If manual QA is disabled, automatically set the "Ready for QA" label
-                return [Label.REVIEW_PASSED, pullRequestState.qaStatus.label()];
+                return [Label.REVIEW_PASSED, currentQAStatus.label()];
             }
         default:
             return hasNeedsDesignReview ? [Label.NEEDS_DESIGN_REVIEW.name] : [];
@@ -9319,12 +9329,12 @@ async function updateLabels(client, prNumber, newLabels, currentLabels) {
     console.log(`Current labels: ${currentLabels}`)
     let labelsToAdd = newLabels.filter(label => !currentLabels.includes(label))
     let labelsToRemove = Label.allCases().filter(label => {
-        return currentLabels.includes(label.name) && !(newLabels.includes(label.name)) && label.name !== Label.IN_QA.name && label.name !== Label.QA_PASSED.name && label.name !== Label.QA_FAILED.name;
+        return currentLabels.includes(label.name) && !(newLabels.includes(label.name))
     })
+    console.log(`Labels to add: ${labelsToAdd.map(label => label.name)}`)
+    console.log(`Labels to remove: ${labelsToRemove.map(label => label.name)}`)
 
-    await Promise.all(
-        [addLabels(client, prNumber, labelsToAdd), removeLabels(client, prNumber, labelsToRemove)]
-    )
+    return [addLabels(client, prNumber, labelsToAdd), removeLabels(client, prNumber, labelsToRemove)]
 }
 
 
@@ -9360,6 +9370,7 @@ async function removeLabels(client, prNumber, labels) {
 
 function updateJiraTicket(newLabels, pullRequestState) {
     const netNewLabels = newLabels.filter(label => !pullRequestState.labels.includes(label))
+    console.log(`Net new labels: ${netNewLabels.map(label => label.name)}`)
 
     switch (true) {
         case pullRequestState.merged:
@@ -9408,7 +9419,6 @@ function sendMessage(webhook, requestType = "POST") {
         "pr_author": pullRequest.user.login
     }
 
-    console.log(`Sending message ${body}`)
     return request.send(JSON.stringify(body));
 }
 
